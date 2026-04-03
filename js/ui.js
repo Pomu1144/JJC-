@@ -58,7 +58,7 @@ export function render(state, screen, actions) {
 
 function screenMeta(screen) {
   const map = {
-    title: ["Title Screen", "Program Manipulation Training Camp"],
+    title: ["Title Screen", "Cursed Technique Training Camp"],
     profile: ["Sorcerer Profile", "Your current technique status"],
     hub: ["Academy Hub", "Narrative progression and key systems"],
     missions: ["Mission Board", "Dispatches, incidents, and exams"],
@@ -66,7 +66,7 @@ function screenMeta(screen) {
     trials: ["LeetCode-Style Cursed Trials", "Training / Combat / Catastrophe"],
     debug: ["Bug Sight Drills", "Cursed flow correction"],
     battle: ["Combat Simulation", "Code-powered cursed battles"],
-    skills: ["Program Manipulation Skill Tree", "Unlock branch evolutions"],
+    skills: ["Technique Skill Tree", "Unlock branch evolutions"],
     rank: ["Rank Status", "Promotion ceremony and exam gate"],
     archives: ["Archives / Glossary", "Lore-linked terminology"],
     vows: ["Binding Vows AI", "Risk-reward contracts measured by oracle"],
@@ -93,11 +93,11 @@ function renderMini(state) {
 function renderTitle(root, state) {
   root.innerHTML = `
     <section class="panel">
-      <h3>Program Manipulation: Cursed Compiler Genesis</h3>
+      <h3>Cursed Technique: C++ Combat Genesis</h3>
       <p>You begin as a ${state.currentRank} sorcerer with unstable command over loops, vectors, and cursed flow control. 
       Train through lessons, trials, incidents, and rank exams to ascend to Special Grade.</p>
       <div class="grid two">
-        <article class="card"><h4>Core Fantasy</h4><p>Code mastery fuels battle casting. Correct syntax sharpens cursed techniques.</p></article>
+        <article class="card"><h4>Core Fantasy</h4><p>Code mastery fuels battle execution. Correct syntax sharpens cursed techniques.</p></article>
         <article class="card"><h4>Interpretation Path</h4><p>Current path: <b>${state.interpretation}</b>. Unlock deeper branches in the skill tree.</p></article>
       </div>
     </section>
@@ -113,7 +113,7 @@ function renderProfile(root, state, actions) {
         <h4>${state.sorcererName}</h4>
         <p><span class="rank-badge">${state.currentRank}</span></p>
         <div class="kv"><span>Cursed Energy</span><b>${state.cursedEnergy}</b></div>
-        <div class="kv"><span>Program Mastery</span><b>${state.mastery}</b></div>
+        <div class="kv"><span>Technique Mastery</span><b>${state.mastery}</b></div>
         <div class="kv"><span>Physical Attack</span><b>${state.physicalAttack}</b></div>
         <div class="kv"><span>Reinforcement Pool</span><b>${state.cursedEnergyReinforcement}</b></div>
         <div class="kv"><span>Body Control</span><b>${Math.round(state.control * 100)}%</b></div>
@@ -152,7 +152,7 @@ function renderHub(root, state, actions) {
   root.innerHTML = `
     <section class="panel">
       <h3>Academy Story Arc</h3>
-      <p>Instructors are calibrating your Program Manipulation through supervised training, field dispatches, and ceremonial promotion tests.</p>
+      <p>Instructors are calibrating your cursed technique control through supervised training, field dispatches, and ceremonial promotion tests.</p>
       <div class="card">
         <p>Story Progress: ${state.storyProgress}/${MISSIONS.length} missions</p>
         <div class="progress"><span style="width:${Math.round((state.storyProgress/MISSIONS.length)*100)}%"></span></div>
@@ -336,10 +336,10 @@ function renderBattle(root, state, actions) {
       <p class="meta">Focus: ${b.conceptFocus} | Reward: +${b.reward} energy</p>
       <p>${b.prompt}</p>
       <div class="kv"><span>Enemy HP</span><b class="enemy-hp">${runtime.hp}</b></div>
-      <textarea class="editor" placeholder="Code cast channel"></textarea>
+      <textarea class="editor" placeholder="string target = \"...\";\nstring technique = \"...\";\nint output = 0;\n\nif (target == \"enemy\") {\n    output = 42;\n    cout << output << \"\\n\";\n}"></textarea>
       <div style="display:flex; gap:8px; margin-top:8px;">
         <input class="energy-alloc" type="range" min="0" max="60" value="20"/>
-        <button class="btn cast">Cast Technique</button>
+        <button class="btn cast">Execute Attack Code</button>
         <button class="btn">Vector Barrage</button>
       </div>
       <div class="small feedback">${done ? "Defeated" : ""}</div>
@@ -352,7 +352,7 @@ function renderBattle(root, state, actions) {
       card.querySelector(".enemy-hp").textContent = Math.max(0, runtime.hp);
       card.querySelector(".feedback").innerHTML = turn.won
         ? `<span class='good'>Enemy exorcised.</span>`
-        : `<span class='warn'>Allocated ${allocated} CE. Dealt ${turn.playerDmg}. Received ${turn.enemyDmg}.</span>`;
+        : `<span class='warn'>Allocated ${allocated} CE. Dealt ${turn.playerDmg}. Received ${turn.enemyDmg}.</span> ${turn.judged.feedback[turn.judged.feedback.length - 1] || ""}`;
       if (turn.won && !done) {
         completeBattle(state, b.id);
         state.cursedEnergy += b.reward;

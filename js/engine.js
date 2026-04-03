@@ -61,7 +61,13 @@ export function solveDebug(state, debug, fixedCode) {
 }
 
 export function runBattleTurn(state, battle, action, code, allocatedEnergy = 15) {
+  const attackScript = evaluateAttackScript(code);
   const judged = judgeCode(code, { requiredTokens: [battle.conceptFocus] });
+  if (!attackScript.ok) {
+    judged.score = Math.max(0, judged.score - 30);
+    judged.pass = judged.score >= 60;
+    judged.feedback.push(attackScript.msg);
+  }
   const bonus = state.unlockedSkills.includes("data_2") ? 8 : 0;
   const crit = state.unlockedSkills.includes("compiler_1") && Math.random() < 0.08;
   const reinforced = Math.floor(state.cursedEnergyReinforcement / 4);
@@ -194,4 +200,19 @@ export function trainTechniquePath(state, pathId, code) {
     return { ok:true, judged, msg:`Technique ${path.name} fully developed and assimilated.` };
   }
   return { ok:true, judged, msg:`Technique training advanced to tier ${state.techniqueProgress[pathId] + 1}.` };
+}
+
+export function evaluateAttackScript(code) {
+  const lines = (code || "").split("\n");
+  const hasTarget = /target\s*=/.test(code);
+  const hasTechnique = /technique\s*=/.test(code);
+  const hasOutput = /output\s*=/.test(code);
+  const indentationValid = lines.some(l => /^ {4}\S/.test(l));
+  if (!hasTarget || !hasTechnique || !hasOutput) {
+    return { ok:false, msg:"Attack script must declare target, technique, and output." };
+  }
+  if (!indentationValid) {
+    return { ok:false, msg:"Attack script requires realistic C++ indentation (4 spaces inside scope)." };
+  }
+  return { ok:true, msg:"Attack script format accepted." };
 }

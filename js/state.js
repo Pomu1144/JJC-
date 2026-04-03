@@ -21,7 +21,7 @@ export function newState(name = "Unnamed Sorcerer") {
     accuracyRecord: [],
     conceptMastery: {},
     interpretation: INTERPRETATIONS[0],
-    unlockedTechniques: ["Basic Script Cast"],
+    unlockedTechniques: ["Basic Technique Form"],
     streak: 0,
     lastPlayDate: null,
     storyProgress: 0,

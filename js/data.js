@@ -66,7 +66,7 @@ export const LESSONS = concepts.map((c, i) => ({
   id: c[0],
   title: `${i + 1}. ${c[1]}`,
   difficulty: i < 7 ? "Foundational" : i < 14 ? "Intermediate" : "Advanced",
-  lore: `${c[1]} is trained as a Program Manipulation kata inside the Cursed Compiler Hall.`,
+  lore: `${c[1]} is trained as a precision kata inside the Cursed Compiler Hall.`,
   explain: `You learn ${c[1]} in plain C++ with examples, mistakes, and tactical usage in combat simulations.`,
   syntax: sampleSyntax(c[0]),
   guidedPrompt: guidedPrompt(c[0]),
@@ -199,7 +199,7 @@ export const SKILLS = [
   {id:"bugs_1", branch:"Bug Sight", name:"Error Tracing", cost:1, effect:"debugBonus", value:1, requires:[]},
   {id:"compiler_1", branch:"Compiler Invocation", name:"Cast Validation", cost:2, effect:"battleCrit", value:.08, requires:[]},
   {id:"flow_1", branch:"Algorithmic Flow State", name:"Combo Sequence", cost:2, effect:"combo", value:1, requires:[]},
-  {id:"domain_1", branch:"Domain of Execution", name:"Runtime Domination", cost:5, effect:"ultimate", value:1, requires:["runtime_1","compiler_1","flow_1"]}
+  {id:"domain_1", branch:"Domain of Execution", name:"Execution Dominion", cost:5, effect:"ultimate", value:1, requires:["runtime_1","compiler_1","flow_1"]}
 ];
 
 export const ARCHIVE_TERMS = [
@@ -214,8 +214,8 @@ export const ARCHIVE_TERMS = [
 ];
 
 export const INTERPRETATIONS = [
-  "Code Weaving",
-  "Runtime Domination",
+  "Technique Weaving",
+  "Runtime Control",
   "Recursive Echo",
   "Pointer Threading",
   "Memory Carving",
@@ -236,7 +236,7 @@ export const TECHNIQUE_PATHS = [
   },
   {
     id: "blood",
-    name: "Blood Weave Script",
+    name: "Blood Weave Protocol",
     owner: "Hemostasis Caster Echo",
     theme: "flows, pressure, dynamic updates",
     tiers: [
