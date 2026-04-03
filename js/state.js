@@ -7,6 +7,9 @@ export function newState(name = "Unnamed Sorcerer") {
     sorcererName: name,
     currentRank: RANKS[0],
     cursedEnergy: 100,
+    cursedEnergyReinforcement: 0,
+    title: "reinforcedbody",
+    control: 0.20,
     mastery: 0,
     completedLessons: [],
     solvedTrials: [],
@@ -24,6 +27,10 @@ export function newState(name = "Unnamed Sorcerer") {
     storyProgress: 0,
     skillPoints: 2,
     hintEnergy: 8,
+    physicalAttack: 12,
+    vowHistory: [],
+    vowScore: 0,
+    techniqueProgress: {},
     settings: { uiGlow: true, slot: 1 }
   };
 }

@@ -1,12 +1,12 @@
-import { ARCHIVE_TERMS, BATTLES, CHALLENGES, DEBUG_DRILLS, INTERPRETATIONS, LESSONS, MISSIONS, NAV_ITEMS, RANKS, SKILLS } from "./data.js";
-import { attemptRankUp, checkMission, completeBattle, completeLesson, getProgress, runBattleTurn, solveDebug, solveTrial, unlockSkill } from "./engine.js";
+import { ARCHIVE_TERMS, BATTLES, CHALLENGES, DEBUG_DRILLS, INTERPRETATIONS, LESSONS, MISSIONS, NAV_ITEMS, RANKS, SKILLS, TAB_ICONS, TECHNIQUE_PATHS } from "./data.js";
+import { applyReinforcement, attemptRankUp, checkMission, completeBattle, completeLesson, evaluateBindingVow, getProgress, runBattleTurn, solveDebug, solveTrial, trainTechniquePath, unlockSkill } from "./engine.js";
 import { calcAccuracy, strongestWeakest } from "./state.js";
 
 export function bindShell(state, actions) {
   const nav = document.getElementById("main-nav");
   NAV_ITEMS.forEach(([id, name]) => {
     const b = document.createElement("button");
-    b.textContent = name;
+    b.innerHTML = `${TAB_ICONS[id] || ""}<span>${name}</span>`;
     b.onclick = () => actions.changeScreen(id);
     b.dataset.screen = id;
     nav.appendChild(b);
@@ -40,7 +40,7 @@ export function render(state, screen, actions) {
 
   const renderers = {
     title: () => renderTitle(root, state),
-    profile: () => renderProfile(root, state),
+    profile: () => renderProfile(root, state, actions),
     hub: () => renderHub(root, state, actions),
     missions: () => renderMissions(root, state, actions),
     lessons: () => renderLessons(root, state, actions),
@@ -50,6 +50,7 @@ export function render(state, screen, actions) {
     skills: () => renderSkills(root, state, actions),
     rank: () => renderRank(root, state, actions),
     archives: () => renderArchive(root, state),
+    vows: () => renderVows(root, state, actions),
     saves: () => renderSaves(root, state, actions)
   };
   renderers[screen]?.();
@@ -68,6 +69,7 @@ function screenMeta(screen) {
     skills: ["Program Manipulation Skill Tree", "Unlock branch evolutions"],
     rank: ["Rank Status", "Promotion ceremony and exam gate"],
     archives: ["Archives / Glossary", "Lore-linked terminology"],
+    vows: ["Binding Vows AI", "Risk-reward contracts measured by oracle"],
     saves: ["Save & Settings", "Slots, preferences, and reset"]
   };
   return map[screen] || ["Screen", ""];
@@ -102,7 +104,7 @@ function renderTitle(root, state) {
   `;
 }
 
-function renderProfile(root, state) {
+function renderProfile(root, state, actions) {
   const sw = strongestWeakest(state);
   const p = getProgress(state);
   root.innerHTML = `
@@ -112,6 +114,9 @@ function renderProfile(root, state) {
         <p><span class="rank-badge">${state.currentRank}</span></p>
         <div class="kv"><span>Cursed Energy</span><b>${state.cursedEnergy}</b></div>
         <div class="kv"><span>Program Mastery</span><b>${state.mastery}</b></div>
+        <div class="kv"><span>Physical Attack</span><b>${state.physicalAttack}</b></div>
+        <div class="kv"><span>Reinforcement Pool</span><b>${state.cursedEnergyReinforcement}</b></div>
+        <div class="kv"><span>Body Control</span><b>${Math.round(state.control * 100)}%</b></div>
         <div class="kv"><span>Interpretation</span><b>${state.interpretation}</b></div>
         <div class="kv"><span>Battle Record</span><b>${state.wonBattles.length} wins</b></div>
       </article>
@@ -124,8 +129,23 @@ function renderProfile(root, state) {
         <div class="kv"><span>Weakest Concept</span><b>${sw.weakest}</b></div>
       </article>
     </section>
+    <section class="panel">
+      <h4>Body Reinforcement Training</h4>
+      <p>int cursedEnergyReinforcement; string title = "reinforcedbody"; double control = 0.20;</p>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input id="reinforce-input" type="range" min="0" max="60" value="15" />
+        <button class="btn" id="reinforce-btn">Reinforce Body</button>
+      </div>
+      <div class="small" id="reinforce-fb"></div>
+    </section>
     ${progressBars(p)}
   `;
+  root.querySelector("#reinforce-btn").onclick = () => {
+    const spend = Number(root.querySelector("#reinforce-input").value);
+    const out = applyReinforcement(state, spend);
+    root.querySelector("#reinforce-fb").innerHTML = `<span class='good'>Spent ${out.spend} CE. Physical attack now ${out.physicalAttack}.</span>`;
+    actions.persist(); actions.refresh();
+  };
 }
 
 function renderHub(root, state, actions) {
@@ -134,8 +154,8 @@ function renderHub(root, state, actions) {
       <h3>Academy Story Arc</h3>
       <p>Instructors are calibrating your Program Manipulation through supervised training, field dispatches, and ceremonial promotion tests.</p>
       <div class="card">
-        <p>Story Progress: ${state.storyProgress}/9 missions</p>
-        <div class="progress"><span style="width:${Math.round((state.storyProgress/9)*100)}%"></span></div>
+        <p>Story Progress: ${state.storyProgress}/${MISSIONS.length} missions</p>
+        <div class="progress"><span style="width:${Math.round((state.storyProgress/MISSIONS.length)*100)}%"></span></div>
       </div>
       <div class="grid two" id="hub-events"></div>
     </section>
@@ -242,7 +262,36 @@ function renderTrials(root, state, actions) {
         : `<span class='bad'>Wrong technique (${out.judged.score}%).</span> ${out.judged.feedback.join(" ")}`;
       actions.persist(); actions.refresh();
     };
+    const techBlock = document.createElement("div");
+    techBlock.className = "small";
+    techBlock.innerHTML = `Technique Overlay: ${TECHNIQUE_PATHS.map(t => t.name).join(" • ")}`;
+    card.appendChild(techBlock);
     list.appendChild(card);
+  });
+  const themed = document.createElement("section");
+  themed.className = "panel";
+  themed.innerHTML = `<h3>Assimilated Technique Development</h3><div class="grid three" id="tech-grid"></div>`;
+  root.appendChild(themed);
+  const tg = themed.querySelector("#tech-grid");
+  TECHNIQUE_PATHS.forEach(path => {
+    const tier = state.techniqueProgress[path.id] || 0;
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML = `
+      <h4>${path.name}</h4>
+      <p class="meta">Theme: ${path.theme}</p>
+      <p>Current objective: ${path.tiers[Math.min(tier, path.tiers.length - 1)]}</p>
+      <textarea class="editor" placeholder="Develop ${path.name} script"></textarea>
+      <button class="btn train-tech">Develop Technique</button>
+      <div class="small fb"></div>
+    `;
+    card.querySelector(".train-tech").onclick = () => {
+      const code = card.querySelector("textarea").value;
+      const out = trainTechniquePath(state, path.id, code);
+      card.querySelector(".fb").innerHTML = out.ok ? `<span class='good'>${out.msg}</span>` : `<span class='bad'>${out.msg}</span>`;
+      actions.persist(); actions.refresh();
+    };
+    tg.appendChild(card);
   });
 }
 
@@ -289,6 +338,7 @@ function renderBattle(root, state, actions) {
       <div class="kv"><span>Enemy HP</span><b class="enemy-hp">${runtime.hp}</b></div>
       <textarea class="editor" placeholder="Code cast channel"></textarea>
       <div style="display:flex; gap:8px; margin-top:8px;">
+        <input class="energy-alloc" type="range" min="0" max="60" value="20"/>
         <button class="btn cast">Cast Technique</button>
         <button class="btn">Vector Barrage</button>
       </div>
@@ -297,11 +347,12 @@ function renderBattle(root, state, actions) {
     const action = { name: "Vector Barrage", base: 15 };
     card.querySelector(".cast").onclick = () => {
       const code = card.querySelector("textarea").value;
-      const turn = runBattleTurn(state, runtime, action, code);
+      const allocated = Number(card.querySelector(".energy-alloc").value);
+      const turn = runBattleTurn(state, runtime, action, code, allocated);
       card.querySelector(".enemy-hp").textContent = Math.max(0, runtime.hp);
       card.querySelector(".feedback").innerHTML = turn.won
         ? `<span class='good'>Enemy exorcised.</span>`
-        : `<span class='warn'>Turn dealt ${turn.playerDmg}. Received ${turn.enemyDmg}.</span>`;
+        : `<span class='warn'>Allocated ${allocated} CE. Dealt ${turn.playerDmg}. Received ${turn.enemyDmg}.</span>`;
       if (turn.won && !done) {
         completeBattle(state, b.id);
         state.cursedEnergy += b.reward;
@@ -310,6 +361,35 @@ function renderBattle(root, state, actions) {
     };
     list.appendChild(card);
   });
+}
+
+function renderVows(root, state, actions) {
+  root.innerHTML = `
+    <section class="panel">
+      <h3>Binding Vow Console</h3>
+      <p>Draft a vow. The in-game AI oracle measures integrity, risk, and exploitability to rate output potential.</p>
+      <label class="small">Vow Terms</label>
+      <textarea id="vow-text" class="editor" placeholder="I cannot use healing for 3 turns, if fail I lose 40 CE, in exchange +40% cast output."></textarea>
+      <div class="resource-row">
+        <label class="resource-chip">Risk <input id="vow-risk" type="range" min="1" max="10" value="6"></label>
+        <label class="resource-chip">Reward Demand <input id="vow-reward" type="range" min="1" max="10" value="6"></label>
+      </div>
+      <button id="vow-eval" class="btn glow">Evaluate Binding Vow</button>
+      <div id="vow-result" class="small"></div>
+    </section>
+    <section class="panel">
+      <h4>Vow History</h4>
+      <div class="log">${state.vowHistory.slice(0,12).map(v => `<p>Score ${v.score}: ${v.vowText}</p>`).join("")}</div>
+    </section>
+  `;
+  root.querySelector("#vow-eval").onclick = () => {
+    const vowText = root.querySelector("#vow-text").value;
+    const risk = Number(root.querySelector("#vow-risk").value);
+    const reward = Number(root.querySelector("#vow-reward").value);
+    const out = evaluateBindingVow(state, vowText, risk, reward);
+    root.querySelector("#vow-result").innerHTML = `Oracle score: <b>${out.score}</b>. ${out.score >= 75 ? "Approved for amplification." : "Vow lacks sufficient consequence."}`;
+    actions.persist(); actions.refresh();
+  };
 }
 
 function renderSkills(root, state, actions) {

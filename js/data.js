@@ -21,8 +21,25 @@ export const NAV_ITEMS = [
   ["skills", "Skill Tree"],
   ["rank", "Rank Status"],
   ["archives", "Archive"],
+  ["vows", "Binding Vows"],
   ["saves", "Save / Load / Settings"]
 ];
+
+export const TAB_ICONS = {
+  title: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 3 7l9 5 9-5-9-5Zm-7 8v7l7 4v-7l-7-4Zm9 11 7-4v-7l-7 4v7Z"/></svg>`,
+  profile: `<svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.4 0-8 2-8 4.5V22h16v-3.5c0-2.5-3.6-4.5-8-4.5Z"/></svg>`,
+  hub: `<svg viewBox="0 0 24 24"><path d="M12 3 2 9l10 6 10-6-10-6Zm-8 9v6l8 4 8-4v-6l-8 5-8-5Z"/></svg>`,
+  missions: `<svg viewBox="0 0 24 24"><path d="M6 3h12v18H6zM8 7h8M8 11h8M8 15h5"/></svg>`,
+  lessons: `<svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h6"/></svg>`,
+  trials: `<svg viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 5-3.8 9.4-9 10-5.2-.6-9-5-9-10V6l9-4Zm0 5v10"/></svg>`,
+  debug: `<svg viewBox="0 0 24 24"><path d="M9 3h6v3h3v3h3v6h-3v3h-3v3H9v-3H6v-3H3V9h3V6h3V3Z"/></svg>`,
+  battle: `<svg viewBox="0 0 24 24"><path d="m4 20 8-16 8 16h-4l-4-8-4 8H4Z"/></svg>`,
+  skills: `<svg viewBox="0 0 24 24"><path d="M12 2 9 8l-7 1 5 5-1 8 6-3 6 3-1-8 5-5-7-1-3-6Z"/></svg>`,
+  rank: `<svg viewBox="0 0 24 24"><path d="M4 4h16v4H4zM6 10h12l-2 10H8L6 10Z"/></svg>`,
+  archives: `<svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>`,
+  vows: `<svg viewBox="0 0 24 24"><path d="M12 2 4 7v10l8 5 8-5V7l-8-5Zm-3 9 2 2 4-4"/></svg>`,
+  saves: `<svg viewBox="0 0 24 24"><path d="M4 4h14l2 2v14H4zM7 4v6h8V4M8 18h8"/></svg>`
+};
 
 const concepts = [
   ["variables", "Variables & Data Types"],
@@ -127,26 +144,42 @@ export const DEBUG_DRILLS = Array.from({ length: 10 }, (_, i) => ({
   hint: "Bug Sight reveals assignment-vs-comparison and missing semicolons as common curses."
 }));
 
-export const MISSIONS = Array.from({ length: 9 }, (_, i) => ({
+const missionLore = [
+  "Dorm Breach Cleanup","First-Year Cursed Console Drill","Night Patrol: Data Fog",
+  "Kanda Underpass Incident","Detention Wing Ritual Sweep","Broken Registry Recovery",
+  "Kyoto Exchange Simulation","Shibuya Signal Distortion","Loop Cathedral Exorcism",
+  "Archive Vault Lockdown","Culling Script Outbreak","Barrier Node Collapse",
+  "Nanami Protocol Endurance","Unstable Domain Mapping","Sukuna Finger Trace Analysis",
+  "Grade 2 Certification Convoy","Semi Grade 1 Emergency Dispatch","Grade 1 Tactical Raid",
+  "Semi Special Grade Zero-Hour","Special Event: Domain Awakening","Special Grade Ascension Rite"
+];
+export const MISSIONS = missionLore.map((name, i) => ({
   id: `mission-${i+1}`,
-  title: i === 8 ? "Special Event: Domain Awakening" : `Training Arc Mission ${i+1}`,
-  type: i < 3 ? "Supervised Training" : i < 6 ? "Field Incident" : "Promotion Arc",
-  summary: `Instructor-guided scenario where Program Manipulation is tested through lessons, trials, and a battle checkpoint.`,
-  reqLessons: i + 1,
-  reqBattles: Math.max(0, i - 1),
-  reqChallenges: i + 2,
-  reward: 30 + i * 10,
-  unlockText: i === 8 ? "Unlock Interpretation: Domain of Execution" : `Unlock technique fragment ${i+1}`
+  title: name,
+  type: i < 6 ? "Supervised Training" : i < 14 ? "Field Incident" : "Promotion Arc",
+  summary: `Lore operation ${i+1}: stabilize cursed infrastructure through coding trials, combat pressure, and command decisions.`,
+  reqLessons: Math.min(18, Math.max(1, i)),
+  reqBattles: Math.min(20, Math.floor(i * 1.1)),
+  reqChallenges: Math.min(27, i + 2),
+  reward: 30 + i * 9,
+  unlockText: i >= 19 ? "Domain-level interpretation data unlocked." : `Unlock technique fragment ${i+1}`
 }));
 
-export const BATTLES = Array.from({ length: 6 }, (_, i) => ({
+const battleNames = [
+  "Null Curse","Malformed Shikigami","Loop Wraith","Memory Rot Beast","Runtime Tyrant","Domain Parasite",
+  "Greed Curse: Overflow Maw","Asymptote Shade","Infinity Knot Curse","Pointer Ghoul","Queue Devourer","Hash Hollower",
+  "Recursive Apostle","Branching Widow","Adjacency Stalker","Binary Phantom","Sliding Maw","Two-Pointer Reaper",
+  "Deadlock Oni","Compiler Revenant","Barrier Leech","Shibuya Lattice Curse","Catastrophe Kernel","Abyssal Register Curse",
+  "Heian Echo Construct","Singularity of Broken Logic"
+];
+export const BATTLES = battleNames.map((enemy, i) => ({
   id: `battle-${i+1}`,
-  enemy: ["Null Curse", "Malformed Shikigami", "Loop Wraith", "Memory Rot Beast", "Runtime Tyrant", "Domain Parasite"][i],
-  hp: 110 + i * 45,
-  attack: 14 + i * 5,
-  conceptFocus: LESSONS[(i * 3) % LESSONS.length].id,
-  reward: 45 + i * 20,
-  prompt: `Use ${LESSONS[(i * 3) % LESSONS.length].id} logic in your code cast to weaken this curse.`
+  enemy,
+  hp: 110 + i * 38,
+  attack: 14 + i * 3,
+  conceptFocus: LESSONS[(i * 2) % LESSONS.length].id,
+  reward: 45 + i * 12,
+  prompt: `Deploy ${LESSONS[(i * 2) % LESSONS.length].id} inside your cast. Allocate cursed energy to overpower ${enemy}.`
 }));
 
 export const RANK_EXAMS = [
@@ -187,4 +220,40 @@ export const INTERPRETATIONS = [
   "Pointer Threading",
   "Memory Carving",
   "Domain of Execution"
+];
+
+export const TECHNIQUE_PATHS = [
+  {
+    id: "limitless",
+    name: "Limitless Emulation",
+    owner: "Infinity User Echo",
+    theme: "infinity, asymptotes, divergence",
+    tiers: [
+      "Compute harmonic growth and discuss divergence.",
+      "Binary search an asymptote threshold with precision.",
+      "Optimize infinite-process simulation with convergence checks."
+    ]
+  },
+  {
+    id: "blood",
+    name: "Blood Weave Script",
+    owner: "Hemostasis Caster Echo",
+    theme: "flows, pressure, dynamic updates",
+    tiers: [
+      "Track blood packet flow with prefix sums.",
+      "Detect pressure bursts using sliding windows.",
+      "Balance flow graph under combat constraints."
+    ]
+  },
+  {
+    id: "ten_shadows",
+    name: "Ten Shadows Patterning",
+    owner: "Shikigami Tactician Echo",
+    theme: "summons, state trees, branching",
+    tiers: [
+      "Model summon roster with vectors/maps.",
+      "Traverse shikigami tree with DFS.",
+      "Plan minimal summon chain with DP + graph search."
+    ]
+  }
 ];

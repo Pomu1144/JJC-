@@ -1,4 +1,4 @@
-import { BATTLES, CHALLENGES, LESSONS, MISSIONS, RANKS, RANK_EXAMS, SKILLS } from "./data.js";
+import { BATTLES, CHALLENGES, LESSONS, MISSIONS, RANKS, RANK_EXAMS, SKILLS, TECHNIQUE_PATHS } from "./data.js";
 import { calcAccuracy, markConcept } from "./state.js";
 
 export function judgeCode(input, activity) {
@@ -60,12 +60,15 @@ export function solveDebug(state, debug, fixedCode) {
   return { ok, score: ok ? 95 : 35 };
 }
 
-export function runBattleTurn(state, battle, action, code) {
+export function runBattleTurn(state, battle, action, code, allocatedEnergy = 15) {
   const judged = judgeCode(code, { requiredTokens: [battle.conceptFocus] });
   const bonus = state.unlockedSkills.includes("data_2") ? 8 : 0;
   const crit = state.unlockedSkills.includes("compiler_1") && Math.random() < 0.08;
-  const playerDmg = (action.base + Math.floor(judged.score / 12) + bonus) * (crit ? 2 : 1);
+  const reinforced = Math.floor(state.cursedEnergyReinforcement / 4);
+  const energyBoost = Math.floor(allocatedEnergy / 4);
+  const playerDmg = (action.base + state.physicalAttack + reinforced + energyBoost + Math.floor(judged.score / 12) + bonus) * (crit ? 2 : 1);
   battle.hp -= playerDmg;
+  state.cursedEnergy = Math.max(0, state.cursedEnergy - allocatedEnergy);
   const enemyDmg = Math.max(0, battle.attack - (judged.pass ? 4 : 0));
   state.cursedEnergy = Math.max(0, state.cursedEnergy - enemyDmg);
   state.battleLog.unshift(`${action.name} dealt ${playerDmg}. ${battle.enemy} dealt ${enemyDmg}.`);
@@ -145,4 +148,50 @@ export function getProgress(state) {
     missionPct: Math.round((state.completedMissions.length / MISSIONS.length) * 100),
     accuracy: calcAccuracy(state)
   };
+}
+
+export function applyReinforcement(state, spentEnergy) {
+  const spend = Math.min(state.cursedEnergy, Math.max(0, Number(spentEnergy) || 0));
+  state.cursedEnergy -= spend;
+  state.cursedEnergyReinforcement += spend;
+  state.physicalAttack = 12 + Math.floor(state.cursedEnergyReinforcement / 8);
+  state.control = Math.min(0.98, state.control + spend / 1000);
+  return { spend, physicalAttack: state.physicalAttack, reinforcement: state.cursedEnergyReinforcement };
+}
+
+export function evaluateBindingVow(state, vowText, risk, reward) {
+  const terms = vowText.toLowerCase();
+  let score = 50;
+  if (terms.includes("cannot") || terms.includes("never")) score += 12;
+  if (terms.includes("if fail") || terms.includes("penalty")) score += 10;
+  if (terms.includes("single use") || terms.includes("cooldown")) score += 8;
+  score += Math.min(15, risk * 3);
+  score -= Math.max(0, reward * 2 - risk);
+  score = Math.max(1, Math.min(100, score));
+  state.vowScore = score;
+  const entry = { vowText, risk, reward, score, date: new Date().toISOString() };
+  state.vowHistory.unshift(entry);
+  if (score >= 75) {
+    state.cursedEnergy += 20;
+    state.skillPoints += 1;
+    state.battleLog.unshift("Binding Vow AI approved a high-integrity vow. Technique output amplified.");
+  }
+  return entry;
+}
+
+export function trainTechniquePath(state, pathId, code) {
+  const path = TECHNIQUE_PATHS.find(p => p.id === pathId);
+  if (!path) return { ok:false, msg:"Technique path missing." };
+  state.techniqueProgress[pathId] ??= 0;
+  const tier = state.techniqueProgress[pathId];
+  const requiredTokens = tier === 0 ? ["for"] : tier === 1 ? ["while","mid"] : ["vector","if"];
+  const judged = judgeCode(code, { requiredTokens });
+  if (!judged.pass) return { ok:false, judged, msg:"Technique script unstable." };
+  state.techniqueProgress[pathId] += 1;
+  state.mastery += 4 + tier;
+  if (state.techniqueProgress[pathId] >= path.tiers.length) {
+    state.unlockedTechniques.push(path.name);
+    return { ok:true, judged, msg:`Technique ${path.name} fully developed and assimilated.` };
+  }
+  return { ok:true, judged, msg:`Technique training advanced to tier ${state.techniqueProgress[pathId] + 1}.` };
 }
